@@ -593,6 +593,39 @@ Environmental Sustainability Indicators: Greenhouse gas emissions.
 8. *Any other comments?*
 	- N/A
 
+# GHG emission levels for different economic sectors in Canada
+```{r, echo=FALSE, warning=FALSE,message=FALSE}
+sector_ghg_emissions <- read_csv("../../inputs/data/ghg-emissions-sector-en.csv", 
+                                    skip = 1)
+sector_ghg_emissions <- sector_ghg_emissions[1:32,]
+colnames(sector_ghg_emissions) <- sector_ghg_emissions[1,]
+sector_ghg_emissions <- sector_ghg_emissions[-1, ] 
+colnames(sector_ghg_emissions) <- c("Year", "Oil and gas", "Transport", "Buildings", "Electricity", "Heavy industry", "Agriculture", "Waste and others")
+sector_ghg_emissions <- mutate_all(sector_ghg_emissions, function(x) as.numeric(as.character(x)))
+sector_ghg_emissions %>%
+  kable(caption = "GHG emission levels for different economic sectors in Canada, in Mt CO2 eq")%>%
+  kable_styling(latex_options = "HOLD_position")%>%
+  add_header_above()
+```
+
+
+
+# Canada's GHG emission levels by province and territories
+```{r, echo=FALSE, warning=FALSE,message=FALSE}
+prov_ghg_emissions <- read_csv("../../inputs/data/ghg-emissions-regional-en.csv", 
+                                      skip = 1)
+prov_ghg_emissions <- prov_ghg_emissions[1:14,]
+colnames(prov_ghg_emissions) <- prov_ghg_emissions[1,]
+prov_ghg_emissions <- prov_ghg_emissions[-1, ] 
+
+colnames(prov_ghg_emissions) <- c("Province or Territory", "1990 GHG Emissions", "2005 GHG Emissions", "2020 GHG Emissions")
+
+prov_ghg_emissions%>%
+  kable(caption = "Canada's GHG emission levels by province or territory, in Mt CO2 eq")%>%
+  kable_styling(latex_options = "HOLD_position")%>%
+  add_header_above()
+```
+
 
 \newpage
 
