@@ -4,7 +4,7 @@ author:
   - Owen Huang
 thanks: "Code and data are available at: https://github.com/Ovven999/Climate_Change "
 date: "`r format(Sys.time(), '%d %B %Y')`"
-abstract: "In this paper, we have fitted a model to predict the anuual national greenhouse gas emission in Canada, and evaluated against the target of 30% reduction in emissions below the 2005 levels by 2030. With the current data presented, we have high believes that Canada will successfully reach its goal by the year of 2030. This is an important implication as it indicates that it is highly likely that Canada will be able to fulfill its goal as stated in the Paris Agreement. Fulfilling the Paris Agreement is the first step toward mitigating the devastating effects of climate change and providing the future generation with a safe world to live in, not a corrupted one."
+abstract: "In this paper, we have fitted a multiple linear regression model to predict the anuual national greenhouse gas (GHG) emission in Canada, and determined that investments in business, machinery equipment, and exports are the economic factors that are contributing the most to Canada's annual GHG emissions. With the current data presented, we are not able to foretell the future trend of Canada's GHG emissions as we cannot quantify how the economy is going to bahave after the pandemic has ended. However, there remains hope as the Government of Canada are actively trying to surpressing the production of GHG, and the innovation of a renewable and green source and energy is imminent. Fulfilling the Paris Agreement (reduce GHG emission levels in 2030 to 30% below the 2005 levels) is the first step toward mitigating the devastating effects of climate change and providing the future generation with a safe world to live in, not a corrupted one."
 output:
   bookdown::pdf_document2
 toc: TRUE
@@ -21,7 +21,6 @@ library(knitr)
 library(kableExtra)
 library(ggpubr)
 library(ggrepel)
-library(haven)
 library("readxl")
 library(readr)
 library(lme4)
@@ -39,7 +38,7 @@ This paper sets out to investigate the effectiveness of the actions performed ag
 
 The most recent data on Canada's greenhouse gas emissions ended in 2019 before the COVID-19 pandemic struck. As a result, we have also taken into account the potential effects of the pandemic in the **Discussion** section, and we determined it would decrease the greenhouse gas emissions in the short-run and will have an overall positive effect upon reaching the final target. The Pan-Canadian Framework on Clean Growth and Climate Change took place in 2018, but soon after its settlement, it is interapted by the pandemic in late 2019. Since we do not have access to the total greenhouse gas emissions in Canada after 2020, we hypothesize and fitted a generalized linear mixed model greenhouse gas emissions against various factors such as various components of GDP, population, and year to figure out which economic activities are the primary driving force of greenhouse gas emissions.
 
-After we obtained the result, we conclude that with the evidence we are presented with, we have strong evidence supporting the hypothesis that by the year 2030, the greenhouse gas emission level will be below that of 2005. This is an important implication as it indicates that it is highly likely that Canada will be able to fulfill its goal as stated in the Paris Agreement. Fulfilling the Paris Agreement is the first step toward mitigating the devastating effects of climate change and providing the future generation with a safe world to live in, not a corrupted one. 
+After we obtained the result, we conclude that with the evidence we are presented with, investments in business, machinery and equipment, and exports are the primary economic factors that are contributing the most to Canada's annual GHG emissions. This can give insights to policy makers to weight the tradeoffs between stimulating investments and limiting GHG emissions. Since the pandemic have stiked the globe in 2020, the most recent data of Canada's GDP and GHG emission levels in 2021 and 2022 has not been revealed, thus we cannot make meaningful predictions on the future trend of the economy and GHG emissions. However, we suggest to keep implementing the current climate change policies such as carbon pricing, promoting zero-emission vehicles, and energy efficiency retrofits for buildings to limit the growth of GHG emission levels, and shift time and resources to research and development branches for innovations in renewable, replenishable, and green energy sources. This would be a more sustainable solution for the long run.
 
 In **Data** section, we will give detailed information on the data set we will use in this analysis, including their sources and the variables that we are interested in. We will also perform an Exploratory Data Analysis (EDA) to determine the nature of the data set to verify the assumptions that we need to fit an appropriate model. In **Result** section we will present the resulting figures and models and discuss their implications on the research question. In **Model** section under results, we will explain the statistical method we will use to answer our research question, along with the general implications and application.Lastly, in the **Discussion** section, we will elaborate on our results in the real world settings and explain what the results we obtained from the analysis tell us about the future greenhouse gas emission levels, the economic implications, and the takeaway for the reader of this paper.
 
@@ -190,7 +189,7 @@ rm(gdp_exp)
 
 ```
 
-Throguhout the analysis of this report, we used $R$ (@1), the $tidyverse$ (@2) package, the $kableExtra$ (@3) package, the $usmap$ (@4) package, the $ggplot2$ (@5) package,the $ggpubr$ (@6) package, and the $readxl$ (@7) package for the data analyzing process and graph plotting. All data and graphs are inspired by Melissa S. Kearney, Phillip B. Levine, and Luke Pardue. 
+Throguhout the analysis of this report, we used $R$ (@1), the $tidyverse$ (@2) package, the $kableExtra$ (@3) package, the $dplyr$ (@4) package, the $ggplot2$ (@5) package,the $ggpubr$ (@6) package, the $knitr$ (@13) package, the $ggrepel$ (@14) package, the $readr$ package, the $readxl$ (@7) package, and the $lme4$ package for the data analyzing process and graph plotting.
 
 The data we have collected are from 3 major sources. First, we obtained the nation-wise greenhouse gas emissions from the Integrated Carbon Observation System (ICOS). ICOS provides standardized open data about various climate measurements. It is consisted of over 140 measurement stations worldwide, and working with numerous scientist and universities around the globe to provide the most accurate data and analysis on our climate (@8). Below is a table describing variables in from data we collected from ICOS after cleaning.
 
@@ -199,7 +198,8 @@ canada_data %>% summarise(Variable = c("Year", "Country", "GHG Emissions"),
                           Descriptions = c("Years from 1959 to 2020", 
                                            "Countries containing Australia, Brazil, Canada, USA, China, etc.(total of 12 countries)", 
                                            "the greenhouse gas emissions in million tonnes per year"))%>%
-  kable(caption = "GHG Emissions, by country")%>%
+  kable(caption = "GHG Emissions, by country",
+        linesep = "")%>%
   kable_styling(latex_options = "HOLD_position")%>%
   add_header_above()
 ```
@@ -207,31 +207,56 @@ canada_data %>% summarise(Variable = c("Year", "Country", "GHG Emissions"),
 
 Data on Canada's annual greenhouse gas emission, annual GHG emission by different economic sectors, and annual GHG emission by different provinces are obtained from the Government of Canada website (@9). Below is a table describing the data about GHG emission levels in different Canada provinces and territories that we collected from Government of Canada after cleaning.
 
-| Variable | Description                          |
-|----------|--------------------------------------|
-| Year | 3 specified years: 1990, 2005, 2020                 |
-| Province pr Territory     | All the Canadian provinces and territories (ON, BC, etc.)              |
-| GHG Emission        | the greenhouse gas emissions in megatons of CO$_2$ equivalent    |
+```{r, echo=FALSE, }
+canada_data %>% summarise(Variable = c("Year", "Province or Territory", "GHG Emissions"),
+                          Descriptions = c("3 specified years: 1990, 2005, 2020", 
+                                           "All the Canadian provinces and territories (ON, BC, etc.)", 
+                                           "the greenhouse gas emissions in megatons of CO2 equivalent"))%>%
+  kable(caption = "Canada's GHG Emissions, by Province or Territory",
+        linesep = "")%>%
+  kable_styling(latex_options = "HOLD_position")%>%
+  add_header_above()
+```
 
 Below is a table describing the data about GHG emission levels in different Canadian economic sectors that we collected from Government of Canada after cleaning.
 
-| Variable | Description                          |
-|----------|--------------------------------------|
-| Year | 3 specified years: 1990, 2005, 2020                 |
-| Total     | The total GHG emissions in the specified year, in Mt CO$_2$ eq             |
-| Sector       | Economic sectors (oil and gas, transports, buildings, electricity, heavy industry, agriculture, waste and others)   |
-| GHG Emission        | the greenhouse gas emissions in Mt CO$_2$ eq     |
+```{r, echo=FALSE, }
+canada_data %>% summarise(Variable = c("Year", "Total", "Sector", "GHG Emission"),
+                          Descriptions = c("Years from 1990 to 2020", 
+                                           "The total GHG emissions in the specified year, in Mt CO2 eq",
+                                           "oil and gas, transports, buildings, electricity, heavy industry, agriculture, waste and others",
+                                           "the greenhouse gas emissions in megatons of CO2 equivalent, for the sector"))%>%
+  kable(caption = "Canada's GHG Emissions, by Province or Territory",
+        linesep = "")%>%
+  kable_styling(latex_options = "HOLD_position")%>%
+  add_header_above()
+```
 
-Canada's GDP per capita (@10) and population (@11) is obtained from the World Bank national accounts data, and OECD National Accounts data files. (CITATION)
+Canada's GDP per capita (@10) and population (@11) is obtained from the World Bank national accounts data, and OECD National Accounts data files. Data on Canada's GDP by expenditure is obtained from Statistics Canada (@12). We have organized the data sets into one as follows. Notice that GDP expenditure have many more sub-categories, here we are only listing a few imporantant ones.
 
-Data on Canada's GDP by expenditure is obtained from Statistics Canada. (CITATION)
+```{r, echo=FALSE, }
+canada_data %>% summarise(Variable = c("Year", "GDP per capita", "GDP", "Population", "GHG emissions", "Final Consumption Expenditure", "Gross Fixed Capital Formation", "Exports", "Imports"),
+                          Descriptions = c("Years from 1990 to 2020", 
+                                           "Country's GDP divided by its population",
+                                           "THe Gross Domestic Product in Canada",
+                                           "The Canada's total population",
+                                           "The total GHG emissions in the specified year, in Mt CO2 eq",
+                                           "Include consumption by households, institutions, and government",
+                                           "Country's total investment",
+                                           "Exports to other countries",
+                                           "Imports from other countries"))%>%
+  kable(caption = "Canada's GDP, population, and GHG emissions, by year",
+        linesep = "")%>%
+  kable_styling(latex_options = "HOLD_position")%>%
+  add_header_above()
+```
 
 
 # Results
 
 ## Annual Greenhouse Gas Emission, by Country
 
-```{r, echo=FALSE, fig.height=4,fig.width=7, fig.cap="Canada's GHG emissions, GDP, and population"}
+```{r, echo=FALSE, fig.height=4,fig.width=7, fig.cap="GHG Emission (Mt), by country"}
 country <- Country_Emissions %>%
   filter(Year>=1990) %>%
   ggplot(aes(x = Year, y = `GHG Emission`, group = country, color=country)) + 
@@ -265,7 +290,7 @@ population <- canada_data %>%
 ghg_output <- canada_data %>%
   filter(Year >= 1990) %>%
   ggplot(aes(x=Year, y=`Total greenhouse gas emissions (megatonnes of carbon dioxide equivalent)`)) + 
-  labs(title = "C: GHG emissions (Megatons)", x="Year", y="GHG emissions (Mt)")+
+  labs(title = "C: GHG emissions (Megatons)", x="Year", y="Mt CO2 eq")+
   geom_point() +
   geom_line()+
   theme_minimal()
@@ -291,7 +316,7 @@ From figure 2A and 2C, we can see that Canada's greenhouse gas emissions follows
 Figure 2B presents Canada's population. Just as population of a country is tightly connected to its economy, it also has a significant effect on the greenhouse gas emissions of a country. More people means more demand and consumption for goods and services. As the population of Canada continues to grow, we would expect fresh blood to be injected into the country, which would help with the long term growth of the economy. But as we have mentioned before, there will be a trade off between the well-being of the economy and the greenhouse gas emissions in the country. We need to seek for a way that promots economical growth, all while preserving or reducing greenhouse gas emissions. 
 
 
-```{r, echo=FALSE, fig.height=3,fig.width=7, fig.cap="Canada's GHG emissions, GDP, and population"}
+```{r, echo=FALSE, fig.height=3,fig.width=7, fig.cap="Canada's GHG emission (Mt CO2 eq), by different sectors"}
 # canada's ghg emission by different sectors
 sector_ghg_emissions %>% 
   filter(!is.na(`Megatonnes of carbon dioxide equivalent`)) %>% 
@@ -306,7 +331,7 @@ Understanding which economic sectors are producing the most amount of greenhouse
 However, there is an offset effect in the electricity and heavy industry sectors. Greenhouse gas emissions in the electricity sector decrease from 94.7 Mt CO$_2$ eq in 2019 to 56.2 Mt CO$_2$ eq in 2020, while emission in heavy industry decrease from 97.2 Mt CO$_2$ eq to 71.8 Mt CO$_2$ eq. Comparing the emission level of 2020 to 2005, we can see that of the overall 69 Mt CO$_2$ eq decrease in GHG emission, most of it comes from the electricity sector which accounts for 61 Mt CO$_2$ eq GHG emission reduction. 
 
 
-```{r, echo=FALSE, fig.height=3,fig.width=7, warning=FALSE, fig.cap="Canada's GHG emissions, GDP, and population"}
+```{r, echo=FALSE, fig.height=3,fig.width=7, warning=FALSE, fig.cap="Canada's GHG emission (Mt CO2 eq), by provinces"}
 prov_ghg_emissions %>% 
   ggplot(aes(x=`Province or territory`, y=`GHG Emission`, fill=Year)) +
   geom_bar(stat='identity', position='dodge') +
@@ -366,7 +391,7 @@ The summary of the linear model shows that GFCF (investment) and exports have st
 Furthermore, we understand that not all investments go into producing products and greenhouse gases, so we fitted a new model with GFCF split into sub-categories of investment such as, business GFCF, residential structures, non-residential structure, machinery and equipment, intellectual property products, non-profit institutions serving households' GFCF, general governments GFCF, along with year and exports. Then we run bi-directional step-wise AIC on the model to reduce the model to obtain the final model below. AIC stands for Akaike Information Criterion, which is a mathematical expression that describes how well the model fits a particular data set, and is used to compare the goodness of fit between different models. Bi-directional step-wise AIC begins with the full model with all the possible predictors, then it is going to remove or add a predictor recursively until we have obtain the model with the smallest AIC value.
 $$ Total \text{ } GHG \text{ } emissions = 11390.74 - 5.51(Year) + 8.26\times10^{-4}(GFCF) + 9.26 \times 10^{-4} (Business \text{ } GFCF) + $$ $$1.38 \times 10^{-3} (Machinery \text{ } and \text{ } equipment) + 5.20 \times 10^{-4} (Exports)$$
 
-```{r , echo=FALSE, fig.height=3,fig.width=5, fig.cap="Canada's GHG emissions, GDP, and population"}
+```{r , echo=FALSE, fig.height=3,fig.width=5, fig.cap="Checking for multiple linear regression assumptions: Y vs Y_hat and QQ plot"}
 r <- resid(final_model)
 
 par(mfrow=c(1,2))
@@ -377,7 +402,7 @@ qqnorm(r)
 qqline(r)
 ```
 
-```{r, echo=FALSE, fig.height=4,fig.width=5, fig.cap="Canada's GHG emissions, GDP, and population"}
+```{r, echo=FALSE, fig.height=4,fig.width=5, fig.cap="Check for the residual plots of the multiple linear regression model"}
 par(mfrow=c(2,3))
 plot(r ~ fitted(final_model), main="Fitted vs Residual", xlab="Fitted", ylab="res.")
 plot(r ~ canada_data$`Gross fixed capital formation`, main="GFCF vs Residua", xlab="GFCF", ylab="res")
