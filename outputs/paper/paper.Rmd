@@ -2,7 +2,7 @@
 title: "Battling Climate Change: Implications on the Canadian Climate Policies in Recent Years"
 author: 
   - Owen Huang
-thanks: "Code and data are available at: https://github.com/Ovven999/Climate_Change"
+thanks: "Code and data are available at: https://github.com/Ovven999/Climate_Change "
 date: "`r format(Sys.time(), '%d %B %Y')`"
 abstract: "In this paper, we have fitted a model to predict the anuual national greenhouse gas emission in Canada, and evaluated against the target of 30% reduction in emissions below the 2005 levels by 2030. With the current data presented, we have high believes that Canada will successfully reach its goal by the year of 2030. This is an important implication as it indicates that it is highly likely that Canada will be able to fulfill its goal as stated in the Paris Agreement. Fulfilling the Paris Agreement is the first step toward mitigating the devastating effects of climate change and providing the future generation with a safe world to live in, not a corrupted one."
 output:
