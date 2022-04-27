@@ -1,14 +1,11 @@
 #### Preamble ####
-# Purpose: Clean the survey data downloaded from [...UPDATE ME!!!!!]
-# Author: Rohan Alexander [CHANGE THIS TO YOUR NAME!!!!]
-# Data: 3 January 2021
-# Contact: rohan.alexander@utoronto.ca [PROBABLY CHANGE THIS ALSO!!!!]
+# Purpose: Clean the survey data downloaded from ICOS, Government of Canada, and Statistic Canada (Links can be found in comments above each data cleaning code)
+# Author: Owen Huang
+# Data: 27 April 2022
+# Contact: o.huang@mail.utoronto.ca
 # License: MIT
 # Pre-requisites: 
-# - Need to have downloaded the ACS data and saved it to inputs/data
-# - Don't forget to gitignore it!
-# - Change these to yours
-# Any other information needed?
+# - Need to have downloaded the appropriate data and saved it to inputs/data
 
 
 #### Workspace setup ####
@@ -18,49 +15,31 @@ library(tidyverse)
 library("readxl")
 library(readr)
 # Read in the raw data. 
-# global historical budget
-Global_Historical_Budget <- read_excel("inputs/data/Global_Carbon_Budget_2021v1.0.xlsx", 
-                                            sheet = "Historical Budget", col_names = FALSE)
-Global_Historical_Budget <- Global_Historical_Budget[16:287,]
-colnames(Global_Historical_Budget) <- Global_Historical_Budget[1,]
-Global_Historical_Budget <- Global_Historical_Budget[-1, ] 
-saveRDS(Global_Historical_Budget, 'Global_Historical_Budget.rds')
-
-# global fossil emissions
-Global_Fossil_Emissions <- read_excel("inputs/data/Global_Carbon_Budget_2021v1.0.xlsx", 
-                                            sheet = "Fossil Emissions by Category", col_names = FALSE)
-Global_Fossil_Emissions <- Global_Fossil_Emissions[9:70,]
-colnames(Global_Fossil_Emissions) <- Global_Fossil_Emissions[1,]
-Global_Fossil_Emissions <- Global_Fossil_Emissions[-1, ] 
-
-# national carbon emissions
-National_Territorial_Emissions <- read_excel("inputs/data/National_Carbon_Emissions_2021v1.0.xlsx", 
-                                                 sheet = "Territorial Emissions")
+# national carbon emissions https://www.icos-cp.eu/science-and-impact/global-carbon-budget/2021
+National_Territorial_Emissions <- read_excel("../../inputs/data/National_Carbon_Emissions_2021v1.0.xlsx", 
+                                             sheet = "Territorial Emissions")
 National_Territorial_Emissions <- National_Territorial_Emissions[11:73,]
 colnames(National_Territorial_Emissions) <- National_Territorial_Emissions[1,]
 colnames(National_Territorial_Emissions)[1] <- "Year"
 National_Territorial_Emissions <- National_Territorial_Emissions[-1, ] 
 Country_Emissions <- National_Territorial_Emissions %>% select(Year, Australia, Brazil, Canada, China, Cuba, France, Germany, India, Japan, Mexico, Sweden, USA)
-Continent_Emissions <- National_Territorial_Emissions %>% select(Year, Asia, Africa, Australia, `Europe`, `North America`, `South America`, World)
-rm(National_Territorial_Emissions)
 
-Continent_Emissions <- mutate_all(Continent_Emissions, function(x) as.numeric(as.character(x)))
-Continent_Emissions <- Continent_Emissions %>% 
-  pivot_longer(colnames(Continent_Emissions)[2:8], names_to = "continent", values_to = "GHG Emission")
 
 Country_Emissions <- mutate_all(Country_Emissions, function(x) as.numeric(as.character(x)))
 Country_Emissions <- Country_Emissions %>% 
   pivot_longer(colnames(Country_Emissions)[2:13], names_to = "country", values_to = "GHG Emission")
 
-# canada ghg emission
-canada_ghg_emission <- read_csv("inputs/data/canada_ghg_emission.csv")
+rm(National_Territorial_Emissions)
+
+# canada ghg emission https://www.canada.ca/en/environment-climate-change/services/environmental-indicators/greenhouse-gas-emissions.html#agriculture
+canada_ghg_emission <- read_csv("../../inputs/data/canada_ghg_emission.csv")
 canada_ghg_emission <- canada_ghg_emission[2:33,]
 colnames(canada_ghg_emission) <- canada_ghg_emission[1,]
 canada_ghg_emission <- canada_ghg_emission[-1, ] 
 canada_ghg_emission <- mutate_all(canada_ghg_emission, function(x) as.numeric(as.character(x)))
 
-# canada gdp per capita
-CAD_GDP_per_cap <- read_excel("inputs/data/GDP_per_cap.xls")
+# canada gdp per capita https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=CA
+CAD_GDP_per_cap <- read_excel("../../inputs/data/GDP_per_cap.xls")
 CAD_GDP_per_cap <- CAD_GDP_per_cap[3:269,]
 colnames(CAD_GDP_per_cap) <- CAD_GDP_per_cap[1,]
 CAD_GDP_per_cap <- CAD_GDP_per_cap[-1, ] 
@@ -71,9 +50,9 @@ temp <- temp[5:65,]
 CAD_GDP_per_cap <- temp
 rm(temp)
 
-# ghg_emission by province
-prov_ghg_emissions <- read_csv("inputs/data/ghg-emissions-regional-en.csv", 
-                                      skip = 1)
+# ghg_emission by province https://www.canada.ca/en/environment-climate-change/services/environmental-indicators/greenhouse-gas-emissions.html#agriculture
+prov_ghg_emissions <- read_csv("../../inputs/data/ghg-emissions-regional-en.csv", 
+                               skip = 1)
 prov_ghg_emissions <- prov_ghg_emissions[1:14,]
 colnames(prov_ghg_emissions) <- prov_ghg_emissions[1,]
 prov_ghg_emissions <- prov_ghg_emissions[-1, ] 
@@ -95,11 +74,11 @@ prov_ghg_emissions  <- prov_ghg_emissions %>%
   mutate(Year = case_when(Year == "1990 greenhouse gas emissions (megatonnes of carbon dioxide equivalent)"~"1990 GHG emission",
                           Year == "2005 greenhouse gas emissions (megatonnes of carbon dioxide equivalent)"~"2005 GHG emission",
                           Year == "2020 greenhouse gas emissions (megatonnes of carbon dioxide equivalent)"~"2020 GHG emission"))
+prov_ghg_emissions$`GHG Emission` <- as.numeric(prov_ghg_emissions$`GHG Emission`)
 
-
-# ghg emission by sectors
-sector_ghg_emissions <- read_csv("inputs/data/ghg-emissions-sector-en.csv", 
-                                    skip = 1)
+# ghg emission by sectors https://www.canada.ca/en/environment-climate-change/services/environmental-indicators/greenhouse-gas-emissions.html#agriculture
+sector_ghg_emissions <- read_csv("../../inputs/data/ghg-emissions-sector-en.csv", 
+                                 skip = 1)
 sector_ghg_emissions <- sector_ghg_emissions[1:32,]
 colnames(sector_ghg_emissions) <- sector_ghg_emissions[1,]
 sector_ghg_emissions <- sector_ghg_emissions[-1, ] 
@@ -111,8 +90,8 @@ temp <- sector_ghg_emissions %>%
 sector_ghg_emissions <- temp
 rm(temp)
 
-# canada population 
-CAD_pop <- read_excel("inputs/data/pop.xls")
+# canada population https://data.worldbank.org/indicator/SP.POP.TOTL?locations=CA
+CAD_pop <- read_excel("../../inputs/data/pop.xls")
 CAD_pop <- CAD_pop[3:269,]
 colnames(CAD_pop) <- CAD_pop[1,]
 CAD_pop <- CAD_pop[-1, ] 
@@ -125,19 +104,19 @@ rm(temp)
 
 # join gdp and pop
 canada_data <- left_join(CAD_GDP_per_cap, CAD_pop)
-canada_data <- canada_data %>% mutate(GDP = `GDP per Capita`*pop) %>% filter(Year >= 1990)
 canada_data <- mutate_all(canada_data, function(x) as.numeric(as.character(x)))
+canada_data <- canada_data %>% mutate(GDP = `GDP per Capita`*pop) %>% filter(Year >= 1990)
 rm(CAD_GDP_per_cap, CAD_pop)
 
 canada_data <- right_join(canada_data, canada_ghg_emission)
 rm(canada_ghg_emission)
 
-# canada gdp by expenditure
-gdp_expenditure <- read_csv("inputs/data/gdp_ex.csv")
+# canada gdp by expenditure https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3610022201
+gdp_expenditure <- read_csv("../../inputs/data/gdp_ex.csv")
 gdp_expenditure <- gdp_expenditure %>% select(REF_DATE, Estimates, VALUE)
 
 
-gdp_exp <- read_csv("inputs/data/gdp_exp.csv", col_names = FALSE)
+gdp_exp <- read_csv("../../inputs/data/gdp_exp.csv", col_names = FALSE)
 gdp_exp <- t(gdp_exp)
 colnames(gdp_exp) <- gdp_exp[1,]
 colnames(gdp_exp)[1] <- "Year"
